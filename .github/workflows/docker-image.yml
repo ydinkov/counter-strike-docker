@@ -1,12 +1,9 @@
-name: Build and Publish Docker image
-
+name: Build and Push Docker Image to Azure Container Registry
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - '*'
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
