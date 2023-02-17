@@ -1,30 +1,32 @@
-name: Build and Push Docker Image to Azure Container Registry
+name: Build and Publish Docker image
+
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag for the Docker image'
-        required: true
+  pull_request:
+    branches:
+      - '*'
+
 jobs:
-  build-and-push:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Login to Azure Container Registry
-        uses: azure/docker-login@v1
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build and Test
+        run: |
+          make build
+          make test
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          login-server: ${{ secrets.ACR_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.ACR_SERVER }}/${{ github.repository }}:${{ github.event.inputs.tag }}
-          build-args:
-            steam_user=${{ secrets.STEAM_USER }}
-            steam_user=${{ secrets.STEAM_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Publish Docker image
+        env:
+          DOCKER_PUBLISH_TAG: ${{ github.ref }}
+        run: make publish
